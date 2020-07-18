@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>DKP Loot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css" />
+<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css" />
+<link rel="stylesheet" href="//getbootstrap.com/docs/4.5/assets/css/docs.min.css" >
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" >
+  </head>
+  <body>
+  
+      <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
+  <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="Bootstrap">LOGO</a>
+
+  <div class="navbar-nav-scroll">
+  </div>
+
+  <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
+    <li class="nav-item">
+      <a class="nav-link p-2" href="http://webdkp.wowcat.net/44966" target="_blank" rel="noopener" aria-label="Twitter">WEBDKP</a>
+    </li>
+  </ul>
+
+</header>
+<script src="//unpkg.com/axios/dist/axios.min.js"></script>
+<!-- Load Vue followed by BootstrapVue -->
+<script src="//unpkg.com/vue@latest/dist/vue.min.js"></script>
+<script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/sprintf/1.1.2/sprintf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.24.0/moment.min.js"></script>
+
+<div id="app">
+<div class="container-fluid">
+<div class="row flex-xl-nowrap">
+
+<div class="col-md-3 col-xl-2 bd-sidebar">
+
+<nav class="collapse bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+	<div class="bd-toc-item active">
+      <ul class="nav bd-sidenav">
+        <li class="active bd-sidenav-active">
+            <a href="/">
+              DKP Loot
+            </a>
+          </li>
+          <li>
+            <a href="/">
+              Item Average DKP
+            </a>
+          </li>
+          <li>
+            <a href="/">
+              DKP Loot
+            </a>
+          </li>
+        </ul>
+    </div>
+	</nav>
+</div>
+
+
+<!-- Right Sidebar -->
+
+
+<main class="col-md-9 col-xl-8 py-md-3 pl-md-5 bd-content" role="main">
+    <h1 class="bd-title" id="content">DKP Loot Table</h1>
+        <p class="bd-lead">Last Update: {{ lastupdate | formatDate }}</p>
+<!--     <p class="bd-lead">Reboot, a collection of element-specific CSS changes in a single file, kickstart Bootstrap to provide an elegant, consistent, and simple baseline to build upon.</p>
+
+
+    <h2 id="approach"><span class="bd-content-title">Approach<a class="anchorjs-link " aria-label="Anchor" data-anchorjs-icon="#" href="#approach" style="padding-left: 0.375em;"></a></span></h2>
+
+	<p>Reboot</p>
+ -->
+	<template>
+	<div class="overflow-auto">
+  <b-row>
+  <b-col lg="4" class="mb-3">
+    <b-input-group size="sm">
+      <b-form-input
+        v-model="filter"
+        type="search"
+        id="filterInput"
+        placeholder="Type to Search"
+      ></b-form-input>
+      <b-input-group-append>
+        <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+      </b-input-group-append>
+    </b-input-group>
+      </b-col>
+      <b-col lg="2" >  
+      <b-form-checkbox v-model="enableWatch" name="check-button" switch size="lg">Watch
+      </b-form-checkbox>
+      <b-form-checkbox v-model="opt_min_real" name="check-button" switch size="lg">MR
+      </b-form-checkbox>
+      </b-col>
+      <b-col lg="6" >  
+        <b-button variant="outline-primary" v-on:click='applyfilter'>Apply</b-button>
+          <b-form-checkbox-group v-model="watchCate">
+            <b-form-checkbox value="AL">Al</b-form-checkbox>
+            <b-form-checkbox value="MINE">MINE</b-form-checkbox>
+            <b-form-checkbox value="HERB">HERB</b-form-checkbox>
+            <b-form-checkbox value="FM">FM</b-form-checkbox>
+            <b-form-checkbox value="MISC">MISC</b-form-checkbox>
+
+          </b-form-checkbox-group>
+          
+      </b-col>
+
+      <b-col lg="4">
+        <b-form-group
+          label="Hightlight: "
+          label-cols-sm="3"
+          label-align-sm="left"
+          label-for="HightlightSort"
+        >
+        <b-form-select v-model="highpct" id="HightlightSort" :options="highpctopt">
+              <template v-slot:first>
+                <option value="">-- Default --</option>
+              </template>
+            </b-form-select>
+        </b-form-group>
+      </b-col>
+  <b-col lg="8" >   
+	<b-pagination
+          v-model="currentPage" 
+          :total-rows="totalRows" 
+          :per-page="perPage" 
+		  align="right" 
+		  limit="10"
+		  aria-controls="ah_table" 
+        ></b-pagination>
+		</b-col>
+ </b-row>
+	<b-table :items="items" 
+				:fields="fields" 
+				:per-page="perPage"
+				:current-page="currentPage"
+        :tbody-tr-class="rowClass"
+        :filter="filter"
+        :filterIncludedFields="filterOn"
+        @filtered="onFiltered"
+				id="ah_table">
+
+        <template v-slot:cell(item_name)="row">
+          {{ row.value }} ({{ row.item.item_id }})<b-button size="sm" @click="info(row.item, row.index, $event.target)"> <i class="fa-info-circle fas"></i></b-button>
+      </template>
+	</b-table>
+	</div>
+      <b-modal :id="infoModal.id" :title="infoModal.title" ok-only @hide="resetInfoModal">
+      <line-chart :chartdata="chartdata" :options="chartopt">
+    </b-modal>
+</template>
+
+
+</main>
+
+</div>
+</div>
+</div>
+<script>
+function gold_format(data){
+    var ga = Math.abs(parseInt(data))
+    if (ga >= 10000) {
+      g = Math.floor(ga / 10000)
+      s =  Math.floor((ga % 10000) / 100)
+      c = ga % 100
+      //return g+"g "+s + "s " + c + "c"
+      return sprintf('%dg %02ds %02dc', g, s, c)
+    }else if(ga >= 100) {
+      s =  Math.floor(ga / 100)
+      c = ga % 100
+      return sprintf('%ds %02dc', s, c)
+    }else{
+      return ga + "c"
+    }
+  }
+
+function formatDate1(v) {
+  if (v) {
+    return moment(v * 1000).format('MMM DD, YYYY HH:mm')
+  }
+}
+
+Vue.filter('formatDate', function(value) {
+  if (value) {
+    return moment(value * 1000).format('MMM DD, YYYY HH:mm')
+  }
+})
+
+
+function class_format(v) {
+  if (v == 0) {
+    return "text-right"
+  } else if (v > 0) {
+    return "text-right text-success"
+  } else {
+    return "text-right text-danger"
+  }
+}
+
+function count_format(v, k, i) {
+  r = i.r.count / i.r_count
+
+  if (r > 1.3) {
+    return "text-right text-success"
+  }else if (r < 0.4) {
+    return "text-right text-danger"
+  }else if (r < 0.7) {
+    return "text-right text-warning"
+  }
+
+  return "text-right"
+}
+
+Vue.component('line-chart', { extends: VueChartJs.Line,
+    props: ['chartdata', 'options'],
+    mounted () {
+    this.renderChart(this.chartdata, this.options)
+  }})
+Vue.config.devtools = true;
+app = new Vue({
+  el: '#app',
+  data () {
+    return {
+	  fields: [{key: "item_name", sortable: true, label: "Item"},
+              {key: "display_cost", sortable: true, class:"text-right", formatter: gold_format, label: "Price"},  
+              {key: "r_wmean", class:"text-right", formatter: gold_format, label: "His Price"}, 
+              {key: "r.count", sortable: true, tdClass: count_format, label: "Count", class:"text-right"}, 
+              {key: "r_change", sortable: true, class:"text-right", tdClass: class_format, formatter: gold_format, label: "Dlt Price"}, 
+              {key: "r_pchange", sortable: true, tdClass: class_format , label: "Dlt %", formatter: value => { return (value* 100).toFixed(2) + '%'}}, 
+              {key: "r_count", sortable: true, label: "Avg Count", class:"text-right", formatter: value => {return value.toFixed(0)}}
+              ],
+      items: null,
+      raw_items: null,
+	  currentPage: 1,
+	  perPage: 50,
+    highpctopt: [{value: 0.3, text: "30%"},
+                {value: 0.2, text: "20%"},
+                {value: 0.5, text: "50%"},
+                {value: 0.75, text: "75%"},
+                {value: 1, text: "100%"},
+              ],
+	  totalRows: 1,
+    //'AL': [], 'MINE': [], 'HERB': [], 'FM': [], 'MISC': []
+    watchCate: ['AL', 'MINE', 'HERB', 'FM', 'MISC'],
+    watchedList: null,
+    enableWatch: false,
+    filter: null,
+    highpct: 0.3,
+    lastupdate: null,
+    filterOn: ['item_name'],
+    infoModal: {
+      id: 'info-modal',
+      title: '',
+      content: ''},
+    chartdata: null,
+    opt_min_real: true,
+    chartopt: {responsive: true, maintainAspectRatio: true, annotation: null},
+    }
+  },
+  watch: {
+    enableWatch: {
+      handler: function () {
+            this.itemsProvider()
+        },
+    },
+    opt_min_real: {
+      handler: function () {
+            this.itemsProvider()
+        },
+    },
+  },
+  mounted () {
+    var u = window.location;
+    var get_url = 'http://127.0.0.1:5000/api/';
+    if (u.hostname == "freedom-in-sfo.c70.us"){
+      get_url = 'http://freedom-in-sfo.c70.us:48022/ah/api/';
+    }
+    axios
+      .get(get_url + 'get_price_range')
+      .then(response => {
+        this.raw_items = response.data.data
+        this.lastupdate = response.data.time
+        this.itemsProvider()
+		//console.log(this.items)
+      })
+      .catch(error => {
+        console.log(error)
+        this.errored = true
+      })
+      .finally(() => this.loading = false)
+    axios
+      .get(get_url + 'get_catelog')
+      .then(response => {
+        this.watchedList = response.data
+    //console.log(this.items)
+      })
+      .catch(error => {
+        console.log(error)
+        this.errored = true
+      })
+      .finally(() => this.loading = false)
+  },
+  methods: {
+      itemsProvider(ctx, callback) {
+        if (this.watchedList === null || !this.enableWatch){
+          this.items = this.raw_items
+        } else {
+          var localfilterList = [];
+          var watchedList = this.watchedList;
+
+          this.watchCate.forEach(function (el){
+          localfilterList = localfilterList.concat(watchedList[el])})
+
+          this.items = this.raw_items.filter(function(el) {return localfilterList.includes(el.item_name) })
+
+        }
+        this.items.map(el => {
+          el.display_cost = this.opt_min_real ? el.r.min_real : el.r.min
+        })
+        this.totalRows = this.items.length
+      },
+      rowClass(item, type) {
+        if (!item) return
+        if (item.r_pchange > this.highpct ) {
+          return 'table-success'
+        } else if(item.r_pchange < -this.highpct) {
+          return 'table-danger'
+        }
+
+        if (Math.abs(item.r_change) > 15000) {
+          return 'table-warning'
+        }
+      },
+      onFiltered(filteredItems) {
+        // Trigger pagination to update the number of buttons/pages due to filtering
+        this.totalRows = filteredItems.length
+        this.currentPage = 1
+      },
+      format_char_data(item){
+        var data = {}
+        data['labels'] = item.his.datepoint.map(el => {return formatDate1(el)})
+        data['datasets'] = []
+        data['datasets'].push({label: 'Price', data: item.his.min_real, fill: false, borderColor: 'rgba(255, 99, 132, 0.5)'})
+        data['datasets'].push({label: 'Count', data: item.his.count, fill: false, borderColor: 'rgba(153, 102, 255, 0.5)'})
+        data['datasets'].push({label: 'Mean', data: item.his.mean, fill: false, borderColor: 'rgba(102, 153, 255, 0.5)'})
+        this.chartdata = data
+      },
+      info(item, index, btn) {
+        //console.log(item.r_wmean)
+        var ave_mean = {
+          annotations: [{
+            drawTime: 'afterDraw',
+            type: 'line',
+            mode: 'horizontal',
+            scaleID: 'y-axis-0',
+            value: Math.round(item.r_wmean),
+            borderColor: 'rgba(0, 158, 115, 0.6)',
+            borderWidth: 2,
+            label: {
+              enabled: false,
+              content: 'Ave Mean'
+            }
+          }]}
+        this.chartopt.annotation = ave_mean
+        this.infoModal.title = `Price: ${item.item_name}`
+        //this.infoModal.content = JSON.stringify(item, null, 2)
+        this.format_char_data(item)
+        this.$root.$emit('bv::show::modal', this.infoModal.id, btn)
+        //this.renderChart(this.chartdata, this.chartopt)
+      },
+      resetInfoModal() {
+        this.infoModal.title = ''
+        this.infoModal.content = ''
+      },
+      applyfilter() {
+        if (this.watchCate.length == 0) {
+          alert("Must select at least one Catagroy")
+          return
+        }
+        this.itemsProvider()
+      }
+    }
+})
+</script>
+</body>
+</html>

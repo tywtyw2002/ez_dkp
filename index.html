@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>DKP Loot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css" />
+<link type="text/css" rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="//getbootstrap.com/docs/4.5/assets/css/docs.min.css" >
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" >
+    <style type="text/css">
+      .his_view {
+        color: #212529;
+        list-style: none;
+        display: flex;
+        padding-left: 0;
+        margin-bottom: 0;
+        flex-direction: column;
+      }
+
+      .his_view_head {
+        border-top: 1px solid #dee2e6;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: bold;
+        display: flex;
+        padding-left: 0;
+        flex-direction: row;
+        list-style: none;
+      }
+
+      .his_view_head li {
+        padding: .75em;
+      }
+
+      .item_summary_detail_head {
+        font-weight: bold;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        border-left: 0.25em solid #fd7e14;
+        padding-left: 0;
+        flex-direction: row;
+        list-style: none;
+      }
+
+      .his_row li{
+        list-style: none;
+        padding: .75em;
+      }
+      .detil_row {
+        padding: 0 !important;
+      }
+
+      .item_summary_row {
+        display: flex;
+        padding-left: 0;
+        flex-direction: row;
+        border-top: 1px solid #dee2e6;
+      }
+
+      .item_summary_detail {
+        padding-left: 1.5em;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 5px;
+        max-height:350px;
+        overflow:auto;
+      }
+
+      .item_summary_detail_row {
+        display: flex;
+        padding-left: 0;
+        flex-direction: row;
+        border-top: 1px solid #dee2e6;
+        border-left: 0.25em solid #fd7e14;
+      }
+    </style>
+  </head>
+  <body>
+
+      <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
+  <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="Bootstrap">LOGO</a>
+
+  <div class="navbar-nav-scroll">
+  </div>
+
+  <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
+    <li class="nav-item">
+      <a class="nav-link p-2" href="http://webdkp.wowcat.net/44966" target="_blank" rel="noopener" aria-label="Twitter">WEBDKP</a>
+    </li>
+  </ul>
+
+</header>
+  
+  
+
+<script src="//unpkg.com/axios/dist/axios.min.js"></script>
+<!-- Load Vue followed by BootstrapVue -->
+<script src="//unpkg.com/vue@latest/dist/vue.min.js"></script>
+<script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/sprintf/1.1.2/sprintf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.24.0/moment.min.js"></script>
+<script src="//unpkg.com/lodash@latest/lodash.min.js"></script>
+
+
+<div id="app">
+<div class="container-fluid">
+<div class="row flex-xl-nowrap">
+
+<div class="col-md-3 col-xl-2 bd-sidebar">
+
+<nav class="collapse bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+      <ul class="nav bd-sidenav">
+        <li class="active bd-sidenav-active">
+            <a href="/">
+              DKP Loot
+            </a>
+          </li>
+          <li>
+            <a href="/">
+              Item Average DKP
+            </a>
+          </li>
+          <li>
+            <a href="/">
+              DKP Loot
+            </a>
+          </li>
+        </ul>
+    </div>
+  </nav>
+</div>
+
+
+<!-- Right Sidebar -->
+
+
+
+<main class="col-md-9 col-xl-8 py-md-3 pl-md-5 bd-content" role="main">
+    <h1 class="bd-title" id="content">DKP Loot Per Character</h1>
+<template>
+ <div class="">
+  <b-row>
+  <b-col lg="4" class="mb-3">
+    <b-input-group prepend="Character:" size="sm">
+      <b-form-select v-model="charSelected" id="HisDaySelect" :options="charsOPT">
+        <template v-slot:first>
+          <b-form-select-option :value="null">Select A Character</b-form-select-option>
+        </template>
+      </b-form-select>
+    </b-input-group>
+  </b-col>
+  <b-col lg="4" class="mb-3">
+      <b-form-checkbox switch v-model="decay_status" size="lg">
+        Show Decay
+      </b-form-checkbox>
+  </b-col>
+  <b-col lg="2" class="mb-2">
+  <b-button size="sm" variant="outline-primary" v-on:click='getCDKP'>Show</b-button>
+  </b-col>
+  </b-row>
+</template>
+
+<div class="bd-callout bd-callout-info" v-show="user_dkp_loot && user_dkp_loot.length">
+<ul class="list-group list-group-horizontal-sm">
+  <li class="list-group-item">DKP: {{ total_dkp.toFixed(1) }}</li>
+  <li class="list-group-item">Avg DKP: {{ total_a.toFixed(1) }}</li>
+  <li class="list-group-item">Percentage: {{ ((total_dkp - total_a) / total_a * 100).toFixed(2) }} %</li>
+</ul>
+Note: Average DKP do not inculde Decay.
+</div>
+
+<section class="main overflow-auto" v-show="user_dkp_loot && user_dkp_loot.length" >
+  <ul class="his_view">
+    <li>
+      <ul class='his_view_head'>
+        <li class='col-md-4'>Record Date</li>
+        <li class='col-md-3'>Item Name</li>
+        <li class='col-md-2'>DKP Point</li>
+        <li class='col-md-2'>Avg DKP Point</li>
+        <li class='col-md-1'></li>
+      </ul>
+    </li>
+    <li
+      v-for="(record, idx) in user_dkp_loot"
+      class="his_row"
+      :key="idx"
+    >
+      <ul class='item_summary_row'>
+        <li class='col-md-4'>{{ formatDate1(record.date) }}</li>
+        <li class='col-md-3'>{{ record.item }}</li>
+        <li class='col-md-2'>{{ record.point.toFixed(2) }}</li>
+        <li class='col-md-2'>{{ get_a_dkp(record.item) }}</li>
+        <li class='col-md-1'><button class="btn btn-secondary btn-sm" @click='toggledetail(record)'> <i class="fa-info-circle fas"></i></button></li>
+      </ul>
+
+      <ul class='item_summary_detail' v-show="record.show_detail" v-if="record.type == '1'">
+        <li style="padding:0">
+          <ul class='item_summary_detail_head'>
+            <li class='col-md-4'>Date</li>
+            <li class='col-md-4'>Character</li>
+            <li class='col-md-2'>DKP Point</li>
+            <li class='col-md-2'></li>
+          </ul>
+        </li>
+        <li
+          v-for="(aitem, idx) in get_a_lootlist(record.item)"
+          class="detil_row"
+          :key="`record.item-${idx}`"
+        >
+          <ul class='item_summary_detail_row'>
+            <li class='col-md-4'>{{ formatDate1(aitem.date) }}</li>
+            <li class='col-md-4'>{{ aitem.user }}</li>
+            <li class='col-md-2'>{{ aitem.point }}</li>
+            <li class='col-md-2'></li>
+          </ul>
+        </li>
+      </ul>
+
+      <ul class='item_summary_detail' v-show="record.show_detail" v-if="record.type == '0'">
+        <li style="padding:0">
+          <ul class='item_summary_detail_head'>
+            <li class='col-md-4'>Date</li>
+            <li class='col-md-2'></li>
+            <li class='col-md-2'>Point</li>
+            <li class='col-md-4'></li>
+          </ul>
+        </li>
+        <li
+          v-for="(r_decay, idx) in sortdecayrecord(record.his)"
+          class="detil_row"
+          :key="`record.item-${idx}`"
+        >
+          <ul class='item_summary_detail_row'>
+            <li class='col-md-3'>{{ formatDate1(r_decay.date) }}</li>
+            <li class='col-md-2'>衰减</li>
+            <li class='col-md-2'>{{ r_decay.point }}</li>
+            <li class='col-md-4'></li>
+          </ul>
+        </li>
+      </ul>
+
+    </li>
+  </ul>
+</section>
+</main>
+
+</div>
+</div>
+</div>
+<script>
+function formatDate1(v) {
+  if (v == "Range") {
+    return "Ranged Time"
+  }
+  if (v) {
+    return moment(v).format('MMM DD, YYYY HH:mm')
+  }
+}
+
+Vue.filter('formatDate', function(value) {
+  if (value) {
+    return moment(value * 1000).format('MMM DD, YYYY HH:mm')
+  }
+})
+
+Vue.config.devtools = true;
+var app = new Vue({
+  el: '#app',
+  data () {
+    return {
+      rerender: false,
+      decay_status: false,
+      darray: {},
+      charSelected: null,
+      avg_dkp_table: [],
+      dkp_records: [],
+      last_hisD: null,
+      user_table: [],
+      user_dkp_loot: [],
+      show_records: false,
+      total_dkp: 0,
+      total_a: 0,
+      charsOPT: [
+          ],
+    }
+  },
+  mounted () {
+    this.get_table_data('avg_dkp_table.json', {'r': 'avg_dkp_table'});
+    this.get_table_data('dkp_reocrds.json', {'r': 'dkp_records' });
+    this.get_table_data('user_table.json', {'r': 'user_table',
+      'cb': this.update_user_opt});
+  },
+  watch: {
+    decay_status: {
+      handler: function () {
+          if (this.show_records) {
+            this.getCDKP()
+          }
+        },
+    }
+  },
+  methods: {
+    getCDKP: function (){
+      if (this.charSelected === null) {
+        return
+      }
+      this.total_dkp = 0;
+      this.total_a = 0;
+      let query_dc = {'user': this.charSelected}
+
+      if (!this.decay_status) {
+        query_dc['type'] = '1'
+      }
+
+      let tmp_loot = _.filter(this.dkp_records, query_dc)
+      tmp_loot = _.orderBy(tmp_loot, 'date', 'desc');
+
+      this.user_dkp_loot = _.reduce(tmp_loot, function(result, value) {
+          if (value.type == 1) {
+              result.push(value);
+          }else{
+              var last = result[result.length - 1]
+              if (!last || (last && last.type != 0)) {
+                  let copy = Object.assign({}, value)
+                  copy.his = [value]
+                  copy.t = 1
+                  result.push(copy)
+              } else {
+                  last.t++;
+                  last.his.push(value);
+                  last.point += value.point;
+                  last.item = "衰减 x " + last.t
+              }
+          }
+          return result
+      }, [])
+      this.total_dkp = _.sumBy(this.user_dkp_loot, 'point')
+      for (let v = 0; v < this.user_dkp_loot.length; v++) {
+        let item_name = this.user_dkp_loot[v].item;
+        if (!item_name.startsWith('衰减')) {
+          let record = _.find(this.avg_dkp_table, {'item': item_name})
+          this.total_a += record.avg
+        }
+      }
+      this.show_records = true;
+    },
+    get_a_dkp: function (item_name) {
+      if (item_name.startsWith('衰减'))
+        return "-"
+
+      let record = _.find(this.avg_dkp_table, {'item': item_name})
+      //this.total_a = this.total_a + record.avg;
+      return `${record.avg} (${record.count})`;
+      //return record
+    },
+    get_a_lootlist: function (item_name) {
+      let record = _.find(this.avg_dkp_table, {'item': item_name})
+      return _.orderBy(record.his, 'date', 'desc');
+    },
+    sortdecayrecord(record) {
+        return _.orderBy(record, 'date', 'desc');
+    },
+    toggledetail: function(record){
+      this.$set(record, 'show_detail', !record.show_detail);
+    },
+    update_user_opt: function(data) {
+      //built charsOPT
+      data.sort()
+      for (var i = 0; i < data.length; i++) {
+        this.charsOPT.push({value: data[i], text: data[i]})
+      }
+    },
+    get_table_data: function(json_path, opt) {
+      let callback = opt.cb
+      axios.get(json_path)
+        .then(response => {
+          const r = response.data
+          if (callback && r) {
+            callback(r);
+          }
+          Vue.set(this, opt.r, r);
+        })
+        .catch(error => {
+          console.log('error')
+          console.log(error)
+        })
+    },
+    // get_item_data: function(item_id) {
+    //   axios
+    //   .post(this.api_url + 'get_item_data', {'item_id': item_id, 'data_peroid': this.hisD * 86400})
+    //   .then(response => {
+    //     if (response.data.err != 0) {
+    //       console.log(response.data);
+    //       alert("Error: " + response.data.msg);
+    //       return
+    //     }
+    //     this.last_hisD = "- For last " + this.hisD + " days."
+    //     this.rdata = response.data.data
+    //     this.process_items()
+    //   })
+    //   .catch(error => {
+    //     console.log(error)
+    //     this.errored = true
+    //   })
+    //   .finally(() => this.loading = false);
+    //   },
+    process_items: function() {
+        //reload darray;
+        this.darray = {};
+        this.his_records = [];
+        var keys = Object.keys(this.rdata.records);
+        keys.sort();
+        keys.reverse();
+        //console.log(keys);
+        //for ( let key in this.rdata.records) {
+        for (let i=0; i<keys.length; i++){
+          key = keys[i];
+          let v = this.rdata.records[key];
+          //v.show_detail = false;
+          this.his_records.push(v);
+          //this.darray[key] = false;
+        }
+        //console.log(this.darray)
+
+        this.item_name = this.rdata.item_name;
+        this.item_id = this.rdata.item_id;
+        this.total_records = this.his_records.length;
+      },
+    },
+})
+window.__VUE_DEVTOOLS_GLOBAL_HOOK__.Vue = app.constructor
+</script>
+</body>
+</html>
